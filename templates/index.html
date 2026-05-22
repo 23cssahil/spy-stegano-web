@@ -1,21 +1,574 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Spy Stegano Live</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spy Stegano Web | Premium Image Steganography</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&family=Fira+Code&display=swap" rel="stylesheet">
     <style>
-        body { background: #0a0a0a; color: #00ff00; font-family: 'Courier New', Courier, monospace; text-align: center; }
-        .container { border: 2px solid #00ff00; display: inline-block; padding: 30,px; margin-top: 50px; }
-        input, button { display: block; margin: 20px auto; padding: 10px; }
+        :root {
+            --bg-color: #050505;
+            --glass-bg: rgba(20, 20, 25, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --neon-green: #00ff88;
+            --neon-green-dim: rgba(0, 255, 136, 0.2);
+            --neon-cyan: #00d4ff;
+            --text-main: #f0f0f0;
+            --text-muted: #888;
+            --error-color: #ff3366;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 255, 136, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(0, 212, 255, 0.08) 0%, transparent 50%);
+            background-size: cover;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated glowing border effect */
+        .container::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-green), var(--neon-cyan), transparent);
+            opacity: 0.5;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--neon-green), var(--neon-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 24px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--glass-border);
+            color: var(--text-main);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .file-drop-area {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .file-drop-area:hover, .file-drop-area.dragover {
+            border-color: var(--neon-green);
+            background: var(--neon-green-dim);
+        }
+
+        .file-drop-area input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-msg {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .file-preview {
+            display: none;
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 15px;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+            color: #000;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 255, 136, 0.2);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-decode {
+            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+            color: white;
+        }
+        
+        .btn-decode:hover {
+            box-shadow: 0 10px 20px rgba(0, 210, 255, 0.2);
+        }
+
+        /* Result Cards */
+        .result-card {
+            display: none;
+            margin-top: 24px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            text-align: center;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .result-card.success { border-color: var(--neon-green); }
+        .result-card.error { border-color: var(--error-color); }
+
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .result-card.success .result-title { color: var(--neon-green); }
+        .result-card.error .result-title { color: var(--error-color); }
+
+        .download-btn, .copy-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .download-btn:hover, .copy-btn:hover {
+            background: var(--neon-green);
+            color: #000;
+        }
+
+        .copy-btn {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+        .copy-btn:hover {
+            background: var(--neon-cyan);
+            color: #000;
+        }
+
+        .decoded-text {
+            background: #000;
+            border: 1px solid #333;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            color: var(--neon-green);
+            text-align: left;
+            word-wrap: break-word;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        /* Loader */
+        .loader {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 480px) {
+            .container { padding: 24px 20px; border-radius: 20px; }
+            .header h1 { font-size: 24px; }
+            .file-drop-area { padding: 20px 15px; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🕵️ SPY STEGANO WEB</h1>
-        <form action="/encode" method="post" enctype="multipart/form-data">
-            <input type="file" name="image" accept="image/png" required>
-            <input type="text" name="message" placeholder="Enter Secret Message" required style="width: 80%;">
-            <button type="submit">GENERATE SECRET IMAGE</button>
-        </form>
+
+<div class="container">
+    <div class="header">
+        <h1>🕵️ Spy Stegano</h1>
+        <p>Hide & extract secret messages within images securely</p>
     </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('encode')">🔒 Hide Message</button>
+        <button class="tab-btn" onclick="switchTab('decode')">🔓 Extract Message</button>
+    </div>
+
+    <!-- ENCODE SECTION -->
+    <div id="encode-tab" class="tab-content active">
+        <form id="encodeForm">
+            <div class="form-group">
+                <div class="file-drop-area" id="encodeDropArea">
+                    <img id="encodePreview" class="file-preview" src="" alt="Preview">
+                    <span style="font-size: 32px; margin-bottom: 10px;" id="encodeIcon">🖼️</span>
+                    <strong id="encodeFileText">Choose or drop an image</strong>
+                    <span class="file-msg" id="encodeFileMsg">JPG, PNG, WEBP allowed</span>
+                    <input type="file" name="image" id="encodeInput" accept="image/*" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <textarea name="message" id="encodeMessage" placeholder="Enter your highly classified secret message here..." required></textarea>
+            </div>
+            <button type="submit" class="btn-submit" id="encodeSubmitBtn">
+                <span class="btn-text">Generate Secret Image</span>
+                <div class="loader" id="encodeLoader"></div>
+            </button>
+        </form>
+
+        <div class="result-card" id="encodeResult">
+            <div class="result-title" id="encodeResultTitle">Success!</div>
+            <p id="encodeResultMsg">Your message is securely hidden.</p>
+            <a href="#" class="download-btn" id="downloadBtn" download>⬇ Download Secret Image</a>
+        </div>
+    </div>
+
+    <!-- DECODE SECTION -->
+    <div id="decode-tab" class="tab-content">
+        <form id="decodeForm">
+            <div class="form-group">
+                <div class="file-drop-area" id="decodeDropArea">
+                    <img id="decodePreview" class="file-preview" src="" alt="Preview">
+                    <span style="font-size: 32px; margin-bottom: 10px;" id="decodeIcon">🔍</span>
+                    <strong id="decodeFileText">Choose or drop a secret image</strong>
+                    <span class="file-msg" id="decodeFileMsg">Must be the encoded PNG</span>
+                    <input type="file" name="image" id="decodeInput" accept="image/png, image/*" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit btn-decode" id="decodeSubmitBtn">
+                <span class="btn-text">Extract Message</span>
+                <div class="loader" id="decodeLoader"></div>
+            </button>
+        </form>
+
+        <div class="result-card" id="decodeResult">
+            <div class="result-title" id="decodeResultTitle">Message Extracted!</div>
+            <div class="decoded-text" id="decodedMessageText"></div>
+            <button type="button" class="copy-btn" id="copyBtn" onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Tab Switching
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        event.target.classList.add('active');
+        document.getElementById(tabId + '-tab').classList.add('active');
+
+        // Reset forms & results when switching tabs
+        document.getElementById('encodeResult').style.display = 'none';
+        document.getElementById('decodeResult').style.display = 'none';
+    }
+
+    // Setup File Upload Previews & Drag-Drop
+    function setupFileInput(inputId, dropAreaId, previewId, iconId, textId, msgId) {
+        const input = document.getElementById(inputId);
+        const dropArea = document.getElementById(dropAreaId);
+        const preview = document.getElementById(previewId);
+        const icon = document.getElementById(iconId);
+        const text = document.getElementById(textId);
+        const msg = document.getElementById(msgId);
+
+        // Drag events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.remove('dragover'), false);
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+            input.files = files;
+            handleFiles(files);
+        });
+
+        input.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+
+        function handleFiles(files) {
+            if(files.length > 0) {
+                const file = files[0];
+                text.textContent = file.name;
+                msg.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    icon.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    }
+
+    setupFileInput('encodeInput', 'encodeDropArea', 'encodePreview', 'encodeIcon', 'encodeFileText', 'encodeFileMsg');
+    setupFileInput('decodeInput', 'decodeDropArea', 'decodePreview', 'decodeIcon', 'decodeFileText', 'decodeFileMsg');
+
+    // UI State handlers
+    function setLoading(btnId, loaderId, isLoading) {
+        const btn = document.getElementById(btnId);
+        const loader = document.getElementById(loaderId);
+        const text = btn.querySelector('.btn-text');
+        
+        if (isLoading) {
+            btn.disabled = true;
+            text.style.display = 'none';
+            loader.style.display = 'block';
+        } else {
+            btn.disabled = false;
+            text.style.display = 'block';
+            loader.style.display = 'none';
+        }
+    }
+
+    function showResult(cardId, type, title, msg) {
+        const card = document.getElementById(cardId);
+        const titleEl = document.getElementById(cardId + 'Title');
+        
+        card.style.display = 'block';
+        card.className = 'result-card ' + type;
+        titleEl.textContent = title;
+        
+        if (cardId === 'encodeResult') {
+            document.getElementById('encodeResultMsg').textContent = msg;
+        } else if (cardId === 'decodeResult' && type === 'success') {
+            document.getElementById('decodedMessageText').textContent = msg;
+            document.getElementById('decodedMessageText').style.display = 'block';
+            document.getElementById('copyBtn').style.display = 'inline-block';
+        } else if (cardId === 'decodeResult' && type === 'error') {
+            document.getElementById('decodedMessageText').style.display = 'none';
+            document.getElementById('copyBtn').style.display = 'none';
+            // Use titleEl for error msg
+            titleEl.textContent = msg;
+        }
+    }
+
+    // Form Submissions
+    document.getElementById('encodeForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const form = e.target;
+        const formData = new FormData(form);
+        
+        setLoading('encodeSubmitBtn', 'encodeLoader', true);
+        document.getElementById('encodeResult').style.display = 'none';
+
+        try {
+            const response = await fetch('/encode', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                showResult('encodeResult', 'success', 'Success!', data.message);
+                const downloadBtn = document.getElementById('downloadBtn');
+                downloadBtn.href = data.download_url;
+                downloadBtn.download = data.filename;
+            } else {
+                showResult('encodeResult', 'error', 'Encoding Failed', data.message);
+            }
+        } catch (error) {
+            showResult('encodeResult', 'error', 'Error', 'Failed to connect to server.');
+        } finally {
+            setLoading('encodeSubmitBtn', 'encodeLoader', false);
+        }
+    });
+
+    document.getElementById('decodeForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const form = e.target;
+        const formData = new FormData(form);
+        
+        setLoading('decodeSubmitBtn', 'decodeLoader', true);
+        document.getElementById('decodeResult').style.display = 'none';
+
+        try {
+            const response = await fetch('/decode', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                showResult('decodeResult', 'success', 'Message Extracted!', data.secret_message);
+            } else {
+                showResult('decodeResult', 'error', 'Decoding Failed', data.message);
+            }
+        } catch (error) {
+            showResult('decodeResult', 'error', 'Error', 'Failed to connect to server.');
+        } finally {
+            setLoading('decodeSubmitBtn', 'decodeLoader', false);
+        }
+    });
+
+    // Copy to clipboard
+    function copyToClipboard() {
+        const text = document.getElementById('decodedMessageText').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.getElementById('copyBtn');
+            const originalText = btn.textContent;
+            btn.textContent = '✅ Copied!';
+            setTimeout(() => { btn.textContent = originalText; }, 2000);
+        });
+    }
+</script>
+
 </body>
 </html>
